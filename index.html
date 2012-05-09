@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes,">
+<title>カードコンプシミュレーター</title>
+<style type="text/css">
+input[type='button'] {
+	width: 300px;
+}
+</style>
+<script type="text/javascript" src="jquery-1.7.1.min.js"></script>
+<script type="text/javascript">
+var rareCount = 0;
+var normalCount = 0;
+var cost = 0;
+var detail = [];
+var completeCount = 0;
+
+$().ready(function() {
+	clearInformation();
+});
+
+function addComma(num)
+{
+	num = num.toString();
+	while(num != (num = num.replace(/^(-?\d+)(\d{3})/, "$1,$2")));
+	return num;
+}
+
+function clearInformation()
+{
+	rareCount = 0;
+	normalCount = 0;
+	cost = 0;
+	completeCount = 0;
+	detail = [];
+	for(var i = 0; i < 8; i++) {
+		detail.push({count: 0, achieveCount: 0, achieveCost: 0});
+	}
+	$("input.controller").removeAttr("disabled");
+	$("#information").text("");
+	$("input#clearButton").hide();
+	$("#tweet-link").hide();
+}
+
+function singleDraw() {
+	var percentage = parseInt($("#percentage").val()) / 100.0;
+	var random = Math.random();
+	if(random < percentage * 4 / 7) {
+		rareCount += 1;
+		detail[Math.floor(Math.random() * 8)].count += 1;
+	} else if(random < percentage) {
+		rareCount += 1;
+		detail[Math.floor(Math.random() * 6)].count += 1;
+	} else {
+		normalCount += 1;
+	}
+	completeCount = detail.reduce(function(sum, node) { return sum + ((node.count > 0) ? 1 : 0); }, 0);
+	if(completeCount > 0 && detail[completeCount - 1].achieveCount == 0) {
+		detail[completeCount - 1].achieveCount = rareCount + normalCount;
+		detail[completeCount - 1].achieveCost = cost;
+	}
+}
+
+function draw(count, price) {
+	if(!checkInput()) return;
+	cost += price;
+	for(var i = 0; i < count; i++) {
+		singleDraw();
+	}
+	displayInformation();
+	checkComplete();
+}
+
+function infinity() {
+	if(!checkInput()) return;
+	$("input.controller").attr("disabled", "disabled");
+	if(completeCount == 8) return;
+
+	draw(11, 3000);
+	setTimeout(infinity, 500);
+}
+
+function checkInput()
+{
+	var percentage = $("#percentage").val();
+	$("#percentage").val(String(parseInt(percentage)));
+	if(percentage != String(parseInt(percentage))) {
+		alert("確率は整数で入力してください。");
+		return false;
+	}
+	if(parseInt(percentage) == 0) {
+		alert("確率0%は破産しちゃうのでやめたげてよぉ！");
+		return false;
+	}
+	return true;
+}
+
+
+function checkComplete()
+{
+	if(completeCount == 8) {
+		$("input.controller").attr("disabled", "disabled");
+		
+		var percentage = parseInt($("#percentage").val());
+		var message = "";
+		message += "出現確率" + percentage + "%のコンプに挑戦し、" + addComma(cost) + "円で揃えることができました！\n";
+		message += "最後の一枚を引くのに" + addComma(detail[7].achieveCost - detail[6].achieveCost) + "円かかりました！";
+
+		alert(message);
+		$("input#clearButton").show();
+
+		var href = "https://twitter.com/intent/tweet?hashtags=compsim%2C&original_referer=https%3A%2F%2Ftwitter.com%2Fabout%2Fresources%2Fbuttons&source=tweetbutton&url=http%3A%2F%2Fbit.ly%2FxOtt4U";
+		href += "&text=" + encodeURI(message + "／【カードコンプシミュレーター】");
+		$("#tweet-link").show().attr("href", href);
+	}
+}
+
+
+function displayInformation()
+{
+	var info = "";
+	info += "ガチャをまわした回数：" + (rareCount + normalCount) + "\r\n";
+	info += "使ったお金：" + addComma(cost) + "円\r\n";
+	info += "--------------------------------------------------------\r\n";
+	info += "コンプ対象カード出現数：" + (rareCount) + "\r\n";
+	info += "コンプ以外カード出現数：" + (normalCount) + "\r\n";
+	info += "--------------------------------------------------------\r\n";
+	info += "コンプ対象内訳：";
+	
+	var counts = [];
+	for(var i = 0; i < 8; i++) {
+		counts.push(detail[i].count + "枚");
+	}
+	info += counts.join(", ") + "\r\n";
+	
+	info += "--------------------------------------------------------\r\n";
+	for(var i = 0; i < 8; i++) {
+		if(detail[i].achieveCount == 0) {
+			info += (i + 1) + "枚集めるまでにかかった回数：まだ集まっていません\r\n";
+		} else {
+			info += (i + 1) + "枚集めるまでにかかった回数：" + detail[i].achieveCount + " (" + addComma(detail[i].achieveCost) + "円)\r\n";
+		}
+	}
+	
+	$("#information").text(info);
+}
+</script>
+</head>
+<body>
+
+コンプ対象(No.1～8)の出現確率：<input type="text" class="controller" id="percentage" value="5" style="text-align:right; width:20px;">%<br>
+No.7/No.8のカードはNo.1～6が出る確率の半分の確率で出現します。<br>
+<input type="button" class="controller" onclick="draw(1, 300)" value="ガチャる(300円)"><br>
+<input type="button" class="controller" onclick="draw(11, 3000)" value="11連ガチャる(3,000円)"><br>
+<input type="button" class="controller" onclick="infinity()" value="揃うまで11連ガチャをひたすら引き続ける"><br>
+<input type="button" id="clearButton" onclick="clearInformation()" value="うわぁぁぁ。夢だ……コレは夢なんだ……（クリア）"><br>
+<br>
+<textarea id="information" cols="65" rows="21" style="max-width: 95%; ">
+</textarea><br>
+<a href="" id="tweet-link">結果をツイートする</a>
+<hr>
+Created by <a href="http://twitter.com/Sheile">@Sheile</a>
+<hr>
+<h4>更新履歴：</h4>
+<ul><li>2012/02/13 07:07<br>入力チェック追加／確率0%でも恐ろしく低い確率で引けてしまっていたバグを修正</li></ul>
+<ul><li>2012/02/10 20:53<br>IE9対応</li></ul>
+<ul><li>2012/02/10 20:30<br>No.7 & 8の出現率がNo.1-6の42%ぐらいになっていたバグを修正しました。<br>今後は記載の通りNo. 1-6の半分の確率で出現します。</li></ul>
+</body>
+</html>
