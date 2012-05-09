@@ -90,8 +90,8 @@ function checkInput()
 		alert("確率は整数で入力してください。");
 		return false;
 	}
-	if(parseInt(percentage) == 0) {
-		alert("確率0%は破産しちゃうのでやめたげてよぉ！");
+	if(parseInt(percentage) <= 0) {
+		alert("確率0%以下は破産しちゃうのでやめたげてよぉ！");
 		return false;
 	}
 	return true;
@@ -164,6 +164,7 @@ No.7/No.8のカードはNo.1～6が出る確率の半分の確率で出現しま
 Created by <a href="http://twitter.com/Sheile">@Sheile</a>
 <hr>
 <h4>更新履歴：</h4>
+<ul><li>2012/05/10 02:00<br>マイナス確率の入力を抑制するように修正<br>報告してくれた方、ありがとうございます。</li></ul>
 <ul><li>2012/02/13 07:07<br>入力チェック追加／確率0%でも恐ろしく低い確率で引けてしまっていたバグを修正</li></ul>
 <ul><li>2012/02/10 20:53<br>IE9対応</li></ul>
 <ul><li>2012/02/10 20:30<br>No.7 & 8の出現率がNo.1-6の42%ぐらいになっていたバグを修正しました。<br>今後は記載の通りNo. 1-6の半分の確率で出現します。</li></ul>
